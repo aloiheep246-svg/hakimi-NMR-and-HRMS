@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4338ca"/>
+      <stop offset="55%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Subtle horizontal grid lines -->
+  <line x1="76" y1="364" x2="436" y2="364" stroke="#ffffff" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+  <line x1="76" y1="284" x2="436" y2="284" stroke="#ffffff" stroke-opacity="0.14" stroke-width="3" stroke-dasharray="10 10"/>
+  <line x1="76" y1="204" x2="436" y2="204" stroke="#ffffff" stroke-opacity="0.14" stroke-width="3" stroke-dasharray="10 10"/>
+  <!-- NMR/MS crisp spectrum peaks -->
+  <path d="M 88 364
+           L 132 364 L 146 270 L 160 364
+           L 174 364 L 188 228 L 202 364
+           L 220 364 L 236 122 L 252 364
+           L 270 364 L 284 246 L 298 364
+           L 310 364 L 324 186 L 338 364
+           L 354 364 L 368 294 L 382 364
+           L 424 364"
+        fill="none" stroke="url(#glow)" stroke-width="18" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Peak highlight dots -->
+  <circle cx="236" cy="122" r="14" fill="#ffffff"/>
+  <circle cx="324" cy="186" r="11" fill="#5eead4"/>
+  <circle cx="188" cy="228" r="10" fill="#a5f3fc"/>
+  <!-- Top badge dots -->
+  <text x="256" y="428" font-family="Arial, sans-serif" font-weight="800" font-size="46" fill="#ffffff" fill-opacity="0.92" text-anchor="middle" letter-spacing="3">NMR · MS</text>
+</svg>

@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>NMR·HRMS速算 — 耄耋小镇的基米大王</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --indigo: #4338ca;
+      --primary: #1d4ed8;
+      --teal: #0f766e;
+      --teal-bg: #f0fdfa;
+      --blue-bg: #eff6ff;
+      --green: #16a34a;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; max-width: 100%; overflow-x: hidden;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.45;
+      padding-bottom: 24px;
+    }
+    .wm-wrap {
+      position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 9999;
+    }
+    .wm-layer {
+      position: absolute; inset: -40%; width: 180%; height: 180%;
+      pointer-events: none; display: flex; flex-wrap: wrap;
+      align-content: flex-start; gap: 60px 68px; transform: rotate(-24deg);
+      opacity: 0.04; overflow: hidden; user-select: none;
+    }
+    .wm-item { font-size: 13px; font-weight: 700; color: #0f172a; white-space: nowrap; }
+    .app-header {
+      position: sticky; top: 0; z-index: 40; width: 100%;
+      background: linear-gradient(135deg, #4338ca 0%, #0f766e 100%);
+      color: #fff; padding: 10px 12px 10px; box-shadow: 0 2px 10px rgba(15,23,42,0.16);
+    }
+    .app-header-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;
+    }
+    .app-title-box { min-width: 0; }
+    .app-title { font-size: 15.5px; font-weight: 800; line-height: 1.2; }
+    .app-sub { font-size: 10.5px; font-weight: 500; opacity: 0.86; margin-top: 2px; }
+    .top-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .top-btn {
+      border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.15);
+      color: #fff; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+    }
+    .seg-tabs {
+      display: grid; grid-template-columns: 1fr 1fr; background: rgba(15,23,42,0.24);
+      border-radius: 10px; padding: 3px; gap: 4px;
+    }
+    .seg-tab {
+      border: none; background: transparent; color: rgba(255,255,255,0.85);
+      font-size: 13.5px; font-weight: 700; padding: 7px 6px; border-radius: 8px;
+    }
+    .seg-tab.active { background: #fff; color: var(--indigo); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+    .main { width: 100%; max-width: 640px; margin: 0 auto; padding: 10px 12px; position: relative; z-index: 1; }
+    .tab-pane { display: none; width: 100%; min-width: 0; }
+    .tab-pane.active { display: block; }
+    .panel {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 11px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+      width: 100%; max-width: 100%; min-width: 0;
+    }
+    .lbl { font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 7px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      border: 1px solid var(--border); background: #fff; color: var(--text);
+      padding: 6px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+    }
+    .chip .chip-sub { font-weight: 400; font-size: 10.5px; color: var(--muted); }
+    .chip.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+    .chip.active .chip-sub { color: #e0e7ff; }
+    .mini-chip {
+      border: 1px solid var(--border); background: #f8fafc; color: #475569;
+      padding: 4px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+    }
+    .mini-chip.active { background: var(--teal-bg); border-color: var(--teal); color: var(--teal); }
+    .residual-banner {
+      display: grid; grid-template-columns: 1fr; gap: 6px;
+      background: linear-gradient(135deg, #eef2ff 0%, #f0fdfa 100%);
+      border: 1px solid #c7d2fe; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+    }
+    .res-item { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; font-size: 12.5px; }
+    .res-item span { color: #475569; font-size: 11.5px; flex-shrink: 0; }
+    .res-item div { text-align: right; min-width: 0; word-break: break-word; }
+    .res-item b { color: var(--indigo); font-size: 13.5px; }
+    input[type="text"], input[type="number"] {
+      width: 100%; border: 1.5px solid #cbd5e1; border-radius: 9px; padding: 9px 11px;
+      font-size: 14px; outline: none; background: #fff; color: var(--text);
+    }
+    input:focus { border-color: var(--indigo); }
+    .seg-row { display: inline-flex; background: #f1f5f9; padding: 3px; border-radius: 8px; gap: 3px; }
+    .seg-btn {
+      border: none; background: transparent; padding: 4px 10px; border-radius: 6px;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+    }
+    .seg-btn.active { background: #fff; color: var(--indigo); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .res-summary { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .imp-card {
+      border: 1px solid var(--border); border-radius: 11px; padding: 11px; margin-bottom: 8px; background: #fff;
+    }
+    .imp-card.top-hit { border-color: #14b8a6; background: #f0fdfa; }
+    .imp-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+    .imp-title { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .hit-badge { font-size: 10.5px; padding: 1px 7px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-weight: 700; }
+    .hit-badge.full { background: #0f766e; color: #fff; }
+    .link-btn { border: none; background: transparent; color: var(--primary); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+    .peak-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .peak-tag {
+      display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 7px;
+      background: #f8fafc; border: 1px solid #e2e8f0; font-size: 12.5px;
+    }
+    .peak-tag.matched { background: #fef3c7; border-color: #f59e0b; }
+    .peak-tag strong { color: #0f172a; font-family: Consolas, monospace; }
+    .peak-tag small { color: var(--muted); font-size: 11px; }
+    .peak-tag em { font-style: normal; font-size: 10.5px; color: #b45309; font-weight: 700; }
+    .imp-note, .muted-note { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+    .mini-table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 12px; }
+    .mini-table td { padding: 4px 5px; border-top: 1px solid #e2e8f0; }
+    .mini-table .sv-col { width: 82px; font-weight: 700; color: var(--indigo); }
+    .salt-tip {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: #fefce8; border: 1px solid #fde047; border-radius: 8px;
+      padding: 7px 10px; font-size: 11.5px; color: #854d0e; margin-top: 8px;
+    }
+    .mass-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 10px; width: 100%; }
+    .mass-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; min-width: 0; }
+    .mass-card.main { grid-column: 1 / -1; background: var(--blue-bg); border-color: #93c5fd; }
+    .mass-card span { display: block; font-size: 11px; color: var(--muted); }
+    .mass-card strong { display: block; font-size: 14px; font-weight: 800; color: var(--text); margin-top: 2px; font-family: Consolas, monospace; word-break: break-word; }
+    .mass-card.main strong { font-size: 19px; color: var(--primary); }
+    .adduct-list { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+    .adduct-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 10px 10px; border: 1px solid var(--border); border-radius: 10px; background: #fff;
+      width: 100%; max-width: 100%; min-width: 0;
+    }
+    .adduct-row.best { border-color: #16a34a; background: #f0fdf4; border-width: 1.5px; }
+    .ad-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .mode-tag {
+      font-size: 10.5px; font-weight: 800; padding: 2px 6px; border-radius: 6px;
+      background: #dbeafe; color: #1d4ed8; flex-shrink: 0;
+    }
+    .mode-tag.neg { background: #fee2e2; color: #b91c1c; }
+    .mode-tag.ei { background: #f3e8ff; color: #7e22ce; }
+    .ad-name { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .best-badge { font-size: 10px; background: #16a34a; color: #fff; padding: 1px 6px; border-radius: 999px; }
+    .ad-sub { font-size: 11px; color: var(--muted); }
+    .ad-right { text-align: right; flex-shrink: 0; }
+    .ad-mz { font-family: Consolas, monospace; font-size: 15px; font-weight: 800; }
+    .err-pill { font-size: 10.5px; font-weight: 700; margin-top: 2px; padding: 1px 5px; border-radius: 5px; display: inline-block; }
+    .err-pill.ok { background: #dcfce7; color: #15803d; }
+    .err-pill.warn { background: #fef3c7; color: #b45309; }
+    .err-pill.bad { background: #fee2e2; color: #b91c1c; }
+    .si-box {
+      margin-top: 10px; background: #fff; border: 1px solid #cbd5e1; border-radius: 10px;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .si-text { font-family: Consolas, monospace; font-size: 12px; color: #1e293b; word-break: break-all; }
+    .btn-teal {
+      border: none; background: var(--teal); color: #fff; padding: 9px 12px;
+      border-radius: 8px; font-size: 13px; font-weight: 700; width: 100%;
+    }
+    .brand-sign {
+      text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 12px;
+      padding: 8px; background: #fff; border: 1px dashed #cbd5e1; border-radius: 9px;
+    }
+    .brand-sign strong { color: var(--teal); }
+    .empty-box, .err-box {
+      padding: 16px; text-align: center; border-radius: 10px; font-size: 12.5px; color: var(--muted); background: #fff; border: 1px dashed var(--border);
+    }
+    .err-box { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(18px);
+      background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 999px; font-size: 12.5px;
+      opacity: 0; pointer-events: none; transition: all .2s; z-index: 10000;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    code { background: #e2e8f0; padding: 1px 4px; border-radius: 4px; font-family: Consolas, monospace; font-size: 11.5px; }
+  </style>
+</head>
+<body>
+  <div class="wm-wrap"><div class="wm-layer" id="wmLayer"></div></div>
+  <header class="app-header">
+    <div class="app-header-top">
+      <div class="app-title-box">
+        <div class="app-title">📡 NMR·HRMS 速算</div>
+        <div class="app-sub">耄耋小镇的基米大王 制作</div>
+      </div>
+      <div class="top-btns">
+        <button type="button" class="top-btn" onclick="loadSampleAll()">示例</button>
+        <button type="button" class="top-btn" onclick="resetAll()">清空</button>
+      </div>
+    </div>
+    <nav class="seg-tabs">
+      <button type="button" class="seg-tab active" id="tabBtnNmr" onclick="switchTab('nmr')">📡 NMR 残留峰</button>
+      <button type="button" class="seg-tab" id="tabBtnHrms" onclick="switchTab('hrms')">🔬 HRMS 加合峰</button>
+    </nav>
+  </header>
+
+  <main class="main">
+    <!-- TAB 1: NMR -->
+    <section class="tab-pane active" id="paneNmr">
+      <div class="panel">
+        <div class="lbl">
+          <span>① 打谱氘代试剂</span>
+          <div class="seg-row">
+            <button type="button" class="seg-btn active" id="nuc1H" onclick="setNucleus('1H')">¹H</button>
+            <button type="button" class="seg-btn" id="nuc13C" onclick="setNucleus('13C')">¹³C</button>
+          </div>
+        </div>
+        <div class="chip-wrap" id="solventChips"></div>
+      </div>
+
+      <div class="residual-banner" id="residualBanner"></div>
+
+      <div class="panel">
+        <div class="lbl">
+          <span>② 输可疑峰 ppm（支持空格隔开多峰）</span>
+          <span style="display:inline-flex; gap:4px;" id="tolChips"></span>
+        </div>
+        <input type="text" id="ppmInput" inputmode="decimal" placeholder="如 4.12 或多峰 4.12 2.05 1.26" oninput="onPpmInput(this.value)" style="margin-bottom:10px;" />
+        <div class="lbl"><span>或直接搜 / 点选残留溶剂名</span></div>
+        <input type="text" id="nameInput" placeholder="如 EA / 乙酸乙酯 / DCM / 硅油" oninput="onNameInput(this.value)" style="margin-bottom:8px;" />
+        <div class="chip-wrap" id="quickImpChips"></div>
+      </div>
+
+      <div id="nmrResults"></div>
+      <div class="brand-sign">🧪 小红书 / 闲鱼搜「<strong>耄耋小镇的基米大王</strong>」获取更新与更多科研工具</div>
+    </section>
+
+    <!-- TAB 2: HRMS -->
+    <section class="tab-pane" id="paneHrms">
+      <div class="panel">
+        <div class="lbl">
+          <span>① 分子式 / SMILES</span>
+          <div class="seg-row">
+            <button type="button" class="seg-btn active" id="hf_all" onclick="setHrmsFilter('all')">全部</button>
+            <button type="button" class="seg-btn" id="hf_+" onclick="setHrmsFilter('+')">ESI+</button>
+            <button type="button" class="seg-btn" id="hf_-" onclick="setHrmsFilter('-')">ESI-</button>
+          </div>
+        </div>
+        <input type="text" id="hrmsInput" placeholder="如 C18H22N2O3、Pd(PPh3)4 或 SMILES" oninput="onHrmsInput(this.value)" style="margin-bottom:10px;" />
+        <div class="lbl"><span>② 实测 Found m/z（选填，自动算 ppm 误差）</span></div>
+        <input type="number" step="any" inputmode="decimal" id="foundMzInput" placeholder="如 181.0498" oninput="onFoundInput(this.value)" />
+        <div class="salt-tip" id="saltTip" style="display:none;">
+          <span id="saltTipText"></span>
+          <label style="display:inline-flex; align-items:center; gap:4px; font-weight:700; white-space:nowrap;">
+            <input type="checkbox" id="stripSaltsChk" onchange="toggleStripSalts(this.checked)" /> 按游离算
+          </label>
+        </div>
+      </div>
+
+      <div id="hrmsSummary"></div>
+      <div class="adduct-list" id="adductList"></div>
+
+      <div class="si-box" id="siCopyBox" style="display:none;">
+        <div style="font-size:11px; color:var(--muted);">论文 SI 标准写法（纯净无水印）</div>
+        <div class="si-text" id="siPreview"></div>
+        <button type="button" class="btn-teal" onclick="copySiText()">📋 复制 SI 标准写法</button>
+      </div>
+
+      <div class="brand-sign">🧪 小红书 / 闲鱼搜「<strong>耄耋小镇的基米大王</strong>」获取更新与更多科研工具</div>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script>
+
+    // =========================================================================
+    // 1. VERIFIED NMR IMPURITY DATABASE (Fulmer 2010 / Gottlieb 1997)
+    // =========================================================================
+    const SOLVENTS = [
+      { id: 'CDCl3',   short: 'CDCl₃',      name: '氘代氯仿',   res1H: [{d:7.26, m:'s', g:'CHCl₃'}],           res13C: [{d:77.16, m:'t', g:'CDCl₃'}],                        h2o: {d:1.56, m:'s', g:'H₂O'} },
+      { id: 'DMSO',    short: 'DMSO-d₆',    name: '氘代DMSO',   res1H: [{d:2.50, m:'p', g:'(CHD₂)SO(CD₃)'}],   res13C: [{d:39.52, m:'hept', g:'(CD₃)₂SO'}],                  h2o: {d:3.33, m:'s', g:'H₂O'} },
+      { id: 'CD3OD',   short: 'CD₃OD',      name: '氘代甲醇',   res1H: [{d:3.31, m:'p', g:'CHD₂OD'}],          res13C: [{d:49.00, m:'hept', g:'CD₃OD'}],                     h2o: {d:4.87, m:'s', g:'HDO / H₂O'} },
+      { id: 'Acetone', short: 'Acetone-d₆', name: '氘代丙酮',   res1H: [{d:2.05, m:'p', g:'CHD₂COCD₃'}],       res13C: [{d:29.84, m:'hept', g:'CD₃'},{d:206.26,m:'s',g:'C=O'}], h2o: {d:2.84, m:'s', g:'H₂O / HDO'} },
+      { id: 'CD3CN',   short: 'CD₃CN',      name: '氘代乙腈',   res1H: [{d:1.94, m:'p', g:'CHD₂CN'}],          res13C: [{d:1.32, m:'hept', g:'CD₃'},{d:118.26,m:'s',g:'CN'}],   h2o: {d:2.13, m:'s', g:'H₂O'} },
+      { id: 'D2O',     short: 'D₂O',        name: '重水',       res1H: [{d:4.79, m:'s', g:'HDO'}],             res13C: [],                                                   h2o: {d:4.79, m:'s', g:'HDO (与溶剂重合)'} },
+      { id: 'CD2Cl2',  short: 'CD₂Cl₂',     name: '氘代二氯',   res1H: [{d:5.32, m:'t', g:'CHDCl₂'}],          res13C: [{d:53.84, m:'p', g:'CD₂Cl₂'}],                       h2o: {d:1.52, m:'s', g:'H₂O'} },
+      { id: 'C6D6',    short: 'C₆D₆',       name: '氘代苯',     res1H: [{d:7.16, m:'s', g:'C₆HD₅'}],           res13C: [{d:128.06, m:'t', g:'C₆D₆'}],                        h2o: {d:0.40, m:'s', g:'H₂O'} }
+    ];
+
+    const NMR_IMPURITIES = [
+      { id:'water', name:'水 (H₂O / HDO)', aliases:['water','h2o','hdo','水','水峰','水分'], hot:true,
+        h1:{ CDCl3:[[1.56,'s','H₂O']], DMSO:[[3.33,'s','H₂O']], CD3OD:[[4.87,'s','HDO/H₂O']], Acetone:[[2.84,'s','H₂O/HDO']], CD3CN:[[2.13,'s','H₂O']], D2O:[[4.79,'s','HDO']], CD2Cl2:[[1.52,'s','H₂O']], C6D6:[[0.40,'s','H₂O']] } },
+      { id:'ea', name:'乙酸乙酯 (EtOAc / EA)', aliases:['ea','etoac','ethyl acetate','乙酸乙酯','醋酸乙酯'], hot:true,
+        h1:{ CDCl3:[[4.12,'q, 7Hz','OCH₂'],[2.05,'s','COCH₃'],[1.26,'t, 7Hz','CH₃']], DMSO:[[4.03,'q, 7Hz','OCH₂'],[1.99,'s','COCH₃'],[1.17,'t, 7Hz','CH₃']], CD3OD:[[4.09,'q, 7Hz','OCH₂'],[2.01,'s','COCH₃'],[1.24,'t, 7Hz','CH₃']], Acetone:[[4.05,'q, 7Hz','OCH₂'],[1.97,'s','COCH₃'],[1.20,'t, 7Hz','CH₃']], CD3CN:[[4.06,'q, 7Hz','OCH₂'],[1.97,'s','COCH₃'],[1.20,'t, 7Hz','CH₃']], D2O:[[4.14,'q, 7Hz','OCH₂'],[2.07,'s','COCH₃'],[1.24,'t, 7Hz','CH₃']], CD2Cl2:[[4.08,'q, 7Hz','OCH₂'],[2.00,'s','COCH₃'],[1.23,'t, 7Hz','CH₃']], C6D6:[[3.89,'q, 7Hz','OCH₂'],[1.65,'s','COCH₃'],[0.92,'t, 7Hz','CH₃']] },
+        c13:{ CDCl3:[[171.36,'s','C=O'],[60.49,'s','OCH₂'],[21.04,'s','COCH₃'],[14.19,'s','CH₃']], DMSO:[[170.31,'s','C=O'],[59.74,'s','OCH₂'],[20.68,'s','COCH₃'],[14.40,'s','CH₃']], CD3OD:[[172.89,'s','C=O'],[61.50,'s','OCH₂'],[20.88,'s','COCH₃'],[14.49,'s','CH₃']] } },
+      { id:'dcm', name:'二氯甲烷 (DCM)', aliases:['dcm','ch2cl2','dichloromethane','二氯甲烷','二氯'], hot:true,
+        h1:{ CDCl3:[[5.30,'s','CH₂Cl₂']], DMSO:[[5.76,'s','CH₂Cl₂']], CD3OD:[[5.49,'s','CH₂Cl₂']], Acetone:[[5.63,'s','CH₂Cl₂']], CD3CN:[[5.44,'s','CH₂Cl₂']], CD2Cl2:[[5.32,'t','CHDCl₂ 残余']], C6D6:[[4.27,'s','CH₂Cl₂']] },
+        c13:{ CDCl3:[[53.52,'s','CH₂Cl₂']], DMSO:[[54.84,'s','CH₂Cl₂']], CD3OD:[[54.9,'s','CH₂Cl₂']], Acetone:[[54.95,'s','CH₂Cl₂']] } },
+      { id:'hexane', name:'正己烷 / 石油醚 (PE)', aliases:['hexane','pe','petroleum ether','正己烷','己烷','石油醚'], hot:true,
+        note:'石油醚 (PE) 主要成分及特征峰位与正己烷相近（~1.26 m, ~0.88 t）',
+        h1:{ CDCl3:[[1.26,'m','CH₂'],[0.88,'t, 7Hz','CH₃']], DMSO:[[1.25,'m','CH₂'],[0.85,'t','CH₃']], CD3OD:[[1.29,'m','CH₂'],[0.90,'t','CH₃']], Acetone:[[1.28,'m','CH₂'],[0.88,'t, 7Hz','CH₃']], CD3CN:[[0.89,'t, 7Hz','CH₃']], CD2Cl2:[[1.27,'m','CH₂'],[0.89,'t, 7Hz','CH₃']], C6D6:[[1.24,'m','CH₂'],[0.89,'t, 7Hz','CH₃']] },
+        c13:{ CDCl3:[[31.60,'s','C3,4'],[22.68,'s','C2,5'],[14.11,'s','CH₃']], DMSO:[[31.1,'s','C3,4'],[22.1,'s','C2,5'],[13.9,'s','CH₃']] } },
+      { id:'silicone', name:'硅油 / 硅脂 (Silicone grease)', aliases:['silicone','grease','pdms','硅油','硅脂','真空硅脂'], hot:true,
+        note:'常见于柱层析塑料接嘴、橡胶塞与磨口硅脂，高场极尖锐单峰',
+        h1:{ CDCl3:[[0.07,'s','Si-CH₃']], DMSO:[[-0.06,'s','Si-CH₃']], CD3OD:[[0.10,'s','Si-CH₃']], Acetone:[[0.13,'s','Si-CH₃']], CD3CN:[[0.08,'s','Si-CH₃']], CD2Cl2:[[0.09,'s','Si-CH₃']], C6D6:[[0.29,'s','Si-CH₃']] },
+        c13:{ CDCl3:[[1.04,'s','Si-CH₃']] } },
+      { id:'thf', name:'四氢呋喃 (THF)', aliases:['thf','tetrahydrofuran','四氢呋喃'], hot:true,
+        h1:{ CDCl3:[[3.76,'m','2,5-CH₂'],[1.85,'m','3,4-CH₂']], DMSO:[[3.60,'m','2,5-CH₂'],[1.76,'m','3,4-CH₂']], CD3OD:[[3.71,'m','2,5-CH₂'],[1.87,'m','3,4-CH₂']], Acetone:[[3.63,'m','2,5-CH₂'],[1.79,'m','3,4-CH₂']], CD3CN:[[3.64,'m','2,5-CH₂'],[1.80,'m','3,4-CH₂']], D2O:[[3.74,'m','2,5-CH₂'],[1.88,'m','3,4-CH₂']], CD2Cl2:[[3.69,'m','2,5-CH₂'],[1.82,'m','3,4-CH₂']], C6D6:[[3.57,'m','2,5-CH₂'],[1.40,'m','3,4-CH₂']] },
+        c13:{ CDCl3:[[67.97,'s','2,5-CH₂'],[25.62,'s','3,4-CH₂']], DMSO:[[67.03,'s','2,5-CH₂'],[25.14,'s','3,4-CH₂']] } },
+      { id:'dmf', name:'DMF (N,N-二甲基甲酰胺)', aliases:['dmf','dimethylformamide','二甲基甲酰胺'], hot:true,
+        h1:{ CDCl3:[[8.02,'s','CHO'],[2.96,'s','NCH₃'],[2.88,'s','NCH₃']], DMSO:[[7.95,'s','CHO'],[2.89,'s','NCH₃'],[2.73,'s','NCH₃']], CD3OD:[[7.97,'s','CHO'],[2.99,'s','NCH₃'],[2.86,'s','NCH₃']], Acetone:[[7.96,'s','CHO'],[2.94,'s','NCH₃'],[2.78,'s','NCH₃']], CD3CN:[[7.92,'s','CHO'],[2.89,'s','NCH₃'],[2.77,'s','NCH₃']], D2O:[[7.92,'s','CHO'],[3.01,'s','NCH₃'],[2.85,'s','NCH₃']], CD2Cl2:[[7.96,'s','CHO'],[2.91,'s','NCH₃'],[2.82,'s','NCH₃']], C6D6:[[7.63,'s','CHO'],[2.36,'s','NCH₃'],[1.86,'s','NCH₃']] },
+        c13:{ CDCl3:[[162.62,'s','CHO'],[36.50,'s','NCH₃'],[31.45,'s','NCH₃']], DMSO:[[162.29,'s','CHO'],[35.73,'s','NCH₃'],[30.73,'s','NCH₃']] } },
+      { id:'meoh', name:'甲醇 (MeOH)', aliases:['meoh','ch3oh','methanol','甲醇'], hot:true,
+        h1:{ CDCl3:[[3.49,'s','CH₃'],[1.09,'s','OH']], DMSO:[[4.01,'s','OH'],[3.16,'s','CH₃']], CD3OD:[[3.31,'p','CHD₂OD 溶剂残余']], Acetone:[[3.31,'s','CH₃'],[3.12,'s','OH']], CD3CN:[[3.28,'s','CH₃']], D2O:[[3.34,'s','CH₃']] },
+        c13:{ CDCl3:[[50.41,'s','CH₃']], DMSO:[[48.6,'s','CH₃']], D2O:[[49.50,'s','CH₃']] } },
+      { id:'et2o', name:'乙醚 (Et₂O)', aliases:['et2o','ether','diethyl ether','乙醚'], hot:true,
+        h1:{ CDCl3:[[3.48,'q, 7Hz','CH₂'],[1.21,'t, 7Hz','CH₃']], DMSO:[[3.38,'q, 7Hz','CH₂'],[1.11,'t, 7Hz','CH₃']], CD3OD:[[3.49,'q, 7Hz','CH₂'],[1.17,'t, 7Hz','CH₃']], Acetone:[[3.41,'q, 7Hz','CH₂'],[1.11,'t, 7Hz','CH₃']], CD3CN:[[3.42,'q, 7Hz','CH₂'],[1.12,'t, 7Hz','CH₃']], CD2Cl2:[[3.43,'q, 7Hz','CH₂'],[1.15,'t, 7Hz','CH₃']], C6D6:[[3.26,'q, 7Hz','CH₂'],[1.11,'t, 7Hz','CH₃']] },
+        c13:{ CDCl3:[[65.91,'s','CH₂'],[15.20,'s','CH₃']], DMSO:[[65.2,'s','CH₂'],[15.1,'s','CH₃']] } },
+      { id:'acetone', name:'丙酮 (Acetone)', aliases:['acetone','丙酮'], hot:true,
+        h1:{ CDCl3:[[2.17,'s','CH₃']], DMSO:[[2.09,'s','CH₃']], CD3OD:[[2.15,'s','CH₃']], Acetone:[[2.09,'s','CH₃ (未氘代)'],[2.05,'p','溶剂残余']], CD3CN:[[2.08,'s','CH₃']], D2O:[[2.22,'s','CH₃']], CD2Cl2:[[2.12,'s','CH₃']], C6D6:[[1.55,'s','CH₃']] },
+        c13:{ CDCl3:[[207.07,'s','C=O'],[30.92,'s','CH₃']], DMSO:[[206.5,'s','C=O'],[30.8,'s','CH₃']], CD3OD:[[209.67,'s','C=O'],[30.67,'s','CH₃']], D2O:[[215.94,'s','C=O'],[30.89,'s','CH₃']] } },
+      { id:'dmso', name:'DMSO (二甲基亚砜)', aliases:['dmso','dimethyl sulfoxide','二甲基亚砜'],
+        h1:{ CDCl3:[[2.62,'s','CH₃']], DMSO:[[2.50,'p','溶剂残余']], CD3OD:[[2.65,'s','CH₃']], Acetone:[[2.52,'s','CH₃']], D2O:[[2.71,'s','CH₃']], C6D6:[[1.68,'s','CH₃']] },
+        c13:{ CDCl3:[[40.45,'s','CH₃']], DMSO:[[39.52,'hept','溶剂残余']], CD3OD:[[40.5,'s','CH₃']] } },
+      { id:'etoh', name:'乙醇 (EtOH)', aliases:['etoh','ethanol','乙醇','酒精'],
+        h1:{ CDCl3:[[3.72,'q, 7Hz','CH₂'],[1.32,'s','OH'],[1.25,'t, 7Hz','CH₃']], DMSO:[[4.63,'s','OH'],[3.44,'q, 7Hz','CH₂'],[1.06,'t, 7Hz','CH₃']], CD3OD:[[3.60,'q, 7Hz','CH₂'],[1.19,'t, 7Hz','CH₃']], Acetone:[[3.57,'q, 7Hz','CH₂'],[3.39,'s','OH'],[1.12,'t, 7Hz','CH₃']], CD3CN:[[3.54,'q, 7Hz','CH₂'],[2.47,'s','OH'],[1.12,'t, 7Hz','CH₃']], D2O:[[3.65,'q, 7Hz','CH₂'],[1.17,'t, 7Hz','CH₃']] },
+        c13:{ CDCl3:[[58.28,'s','CH₂'],[18.41,'s','CH₃']], DMSO:[[56.0,'s','CH₂'],[18.2,'s','CH₃']], D2O:[[58.05,'s','CH₂'],[17.47,'s','CH₃']] } },
+      { id:'mecn', name:'乙腈 (MeCN / ACN)', aliases:['mecn','acn','ch3cn','acetonitrile','乙腈'],
+        h1:{ CDCl3:[[2.10,'s','CH₃']], DMSO:[[2.07,'s','CH₃']], CD3OD:[[2.03,'s','CH₃']], Acetone:[[2.05,'s','CH₃']], CD3CN:[[1.96,'s','CH₃CN (残余1.94 p)']], D2O:[[2.06,'s','CH₃']], C6D6:[[0.58,'s','CH₃']] },
+        c13:{ CDCl3:[[116.43,'s','CN'],[1.89,'s','CH₃']], CD3OD:[[118.06,'s','CN'],[0.85,'s','CH₃']] } },
+      { id:'toluene', name:'甲苯 (Toluene)', aliases:['toluene','甲苯'],
+        h1:{ CDCl3:[[7.25,'m','m-ArH'],[7.17,'m','o,p-ArH'],[2.36,'s','CH₃']], DMSO:[[7.25,'m','m-ArH'],[7.18,'m','o,p-ArH'],[2.30,'s','CH₃']], CD3OD:[[7.16,'m','ArH'],[2.32,'s','CH₃']], Acetone:[[7.15,'m','ArH (7.10-7.20)'],[2.32,'s','CH₃']], CD3CN:[[7.20,'m','ArH (7.10-7.30)'],[2.33,'s','CH₃']], CD2Cl2:[[7.24,'m','m-ArH'],[7.15,'m','o,p-ArH'],[2.34,'s','CH₃']], C6D6:[[7.13,'m','m-ArH'],[7.02,'m','o,p-ArH'],[2.11,'s','CH₃']] },
+        c13:{ CDCl3:[[137.89,'s','C1'],[129.07,'s','Ar'],[128.26,'s','Ar'],[125.33,'s','Ar'],[21.46,'s','CH₃']], DMSO:[[137.4,'s','C1'],[128.9,'s','Ar'],[128.2,'s','Ar'],[125.3,'s','Ar'],[21.1,'s','CH₃']] } },
+      { id:'et3n', name:'三乙胺 (Et₃N / TEA)', aliases:['et3n','tea','triethylamine','三乙胺'],
+        note:'若样品含微量酸成盐，三乙胺峰会显著向低场偏移（CH₂ ~3.1, CH₃ ~1.3）',
+        h1:{ CDCl3:[[2.53,'q, 7Hz','CH₂'],[1.03,'t, 7Hz','CH₃']], DMSO:[[2.43,'q, 7Hz','CH₂'],[0.96,'t, 7Hz','CH₃']], CD3OD:[[2.58,'q, 7Hz','CH₂'],[1.05,'t, 7Hz','CH₃']], D2O:[[2.57,'q, 7Hz','CH₂']] },
+        c13:{ CDCl3:[[46.25,'s','CH₂'],[11.61,'s','CH₃']], DMSO:[[45.74,'s','CH₂'],[11.74,'s','CH₃']] } },
+      { id:'dioxane', name:'1,4-二氧六环 (Dioxane)', aliases:['dioxane','1,4-dioxane','二氧六环'],
+        h1:{ CDCl3:[[3.71,'s','CH₂']], DMSO:[[3.57,'s','CH₂']], CD3OD:[[3.66,'s','CH₂']], Acetone:[[3.59,'s','CH₂']], CD3CN:[[3.60,'s','CH₂']], D2O:[[3.75,'s','CH₂']] },
+        c13:{ CDCl3:[[67.14,'s','CH₂']], DMSO:[[66.5,'s','CH₂']] } },
+      { id:'chcl3', name:'氯仿 (CHCl₃)', aliases:['chcl3','chloroform','氯仿','三氯甲烷'],
+        h1:{ CDCl3:[[7.26,'s','CHCl₃ 溶剂残余']], DMSO:[[8.32,'s','CHCl₃']], CD3OD:[[7.90,'s','CHCl₃']], Acetone:[[8.02,'s','CHCl₃']], CD3CN:[[7.58,'s','CHCl₃']], CD2Cl2:[[7.32,'s','CHCl₃']], C6D6:[[6.15,'s','CHCl₃']] },
+        c13:{ CDCl3:[[77.16,'t','溶剂残余']], DMSO:[[79.1,'s','CHCl₃']], CD3OD:[[79.0,'s','CHCl₃']] } },
+      { id:'pentane', name:'正戊烷 (n-Pentane)', aliases:['pentane','正戊烷','戊烷'],
+        h1:{ CDCl3:[[1.27,'m','CH₂'],[0.88,'t, 7Hz','CH₃']], DMSO:[[1.27,'m','CH₂'],[0.86,'t, 7Hz','CH₃']], CD3OD:[[1.29,'m','CH₂'],[0.90,'t, 7Hz','CH₃']] } },
+      { id:'cyclohexane', name:'环己烷 (Cyclohexane)', aliases:['cyclohexane','环己烷'],
+        h1:{ CDCl3:[[1.43,'s','CH₂']], DMSO:[[1.40,'s','CH₂']], CD3OD:[[1.45,'s','CH₂']], Acetone:[[1.43,'s','CH₂']], CD3CN:[[1.44,'s','CH₂']], C6D6:[[1.40,'s','CH₂']] },
+        c13:{ CDCl3:[[26.9,'s','CH₂']] } },
+      { id:'benzene', name:'苯 (Benzene)', aliases:['benzene','c6h6','苯'],
+        h1:{ CDCl3:[[7.36,'s','ArH']], DMSO:[[7.37,'s','ArH']], CD3OD:[[7.33,'s','ArH']], Acetone:[[7.36,'s','ArH']], CD3CN:[[7.37,'s','ArH']], C6D6:[[7.16,'s','溶剂残余']] },
+        c13:{ CDCl3:[[128.37,'s','ArCH']] } },
+      { id:'pyridine', name:'吡啶 (Pyridine)', aliases:['pyridine','py','吡啶'],
+        h1:{ CDCl3:[[8.62,'m','2,6-ArH'],[7.68,'m','4-ArH'],[7.29,'m','3,5-ArH']], DMSO:[[8.58,'m','2,6-ArH'],[7.79,'m','4-ArH'],[7.39,'m','3,5-ArH']], CD3OD:[[8.53,'m','2,6-ArH'],[7.85,'m','4-ArH'],[7.44,'m','3,5-ArH']], D2O:[[8.52,'m','2,6-ArH'],[7.87,'m','4-ArH'],[7.45,'m','3,5-ArH']] },
+        c13:{ CDCl3:[[149.90,'s','2,6-C']] } },
+      { id:'acoh', name:'乙酸 / 醋酸 (AcOH)', aliases:['acoh','hoac','acetic acid','乙酸','醋酸'],
+        h1:{ CDCl3:[[2.10,'s','CH₃']], DMSO:[[1.91,'s','CH₃']], CD3OD:[[1.99,'s','CH₃']], D2O:[[2.08,'s','CH₃']] },
+        c13:{ CDCl3:[[175.99,'s','C=O'],[20.81,'s','CH₃']] } },
+      { id:'iproh', name:'异丙醇 (iPrOH)', aliases:['iproh','2-propanol','isopropanol','异丙醇'],
+        h1:{ CDCl3:[[4.04,'sept, 6Hz','CH'],[1.22,'d, 6Hz','CH₃']], DMSO:[[3.78,'sept, 6Hz','CH'],[1.04,'d, 6Hz','CH₃']], CD3OD:[[3.92,'sept, 6Hz','CH'],[1.15,'d, 6Hz','CH₃']], D2O:[[4.02,'sept, 6Hz','CH'],[1.17,'d, 6Hz','CH₃']] } },
+      { id:'tbuoh', name:'叔丁醇 (t-BuOH)', aliases:['tbuoh','t-buoh','tert-butanol','叔丁醇'],
+        h1:{ CDCl3:[[1.28,'s','CH₃']], DMSO:[[1.11,'s','CH₃']], CD3OD:[[1.40,'s','CH₃']], D2O:[[1.24,'s','CH₃']] } },
+      { id:'hgrease', name:'真空烃脂 (H-grease / Apiezon)', aliases:['h grease','apiezon','真空脂','白凡士林','油封脂'],
+        h1:{ CDCl3:[[1.25,'m','CH₂ 宽峰'],[0.86,'m','CH₃']], C6D6:[[1.32,'m','CH₂'],[0.94,'m','CH₃']] } },
+      { id:'bht', name:'BHT 稳定剂 (THF / 乙醚常见)', aliases:['bht','抗氧化剂','稳定剂'],
+        note:'常作为稳定剂混在普通 THF / 乙醚中，旋蒸后不挥发易随产品出峰',
+        h1:{ CDCl3:[[6.98,'s','ArH'],[5.01,'s','OH'],[2.27,'s','ArCH₃'],[1.43,'s','t-Bu']], DMSO:[[6.87,'s','ArH'],[6.65,'s','OH'],[2.18,'s','ArCH₃'],[1.36,'s','t-Bu']], CD3OD:[[6.92,'s','ArH'],[2.21,'s','ArCH₃'],[1.40,'s','t-Bu']], Acetone:[[6.96,'s','ArH'],[4.79,'s','OH'],[2.24,'s','ArCH₃'],[1.38,'s','t-Bu']] } },
+      { id:'mtbe', name:'甲基叔丁基醚 (MTBE)', aliases:['mtbe','tbme','甲基叔丁基醚'],
+        h1:{ CDCl3:[[3.22,'s','OCH₃'],[1.19,'s','t-Bu']] } },
+      { id:'dce', name:'1,2-二氯乙烷 (DCE)', aliases:['dce','1,2-dichloroethane','二氯乙烷'],
+        h1:{ CDCl3:[[3.73,'s','CH₂']] } },
+      { id:'dme', name:'乙二醇二甲醚 (DME)', aliases:['dme','glyme','1,2-dimethoxyethane','乙二醇二甲醚'],
+        h1:{ CDCl3:[[3.55,'s','CH₂'],[3.40,'s','OCH₃']] } },
+      { id:'meno2', name:'硝基甲烷 (MeNO₂)', aliases:['nitromethane','meno2','ch3no2','硝基甲烷'],
+        h1:{ CDCl3:[[4.33,'s','CH₃']] } }
+    ];
+
+    // =========================================================================
+    // 2. MONOISOTOPIC & AVERAGE MASSES + FORMULA / SMILES PARSER
+    // =========================================================================
+    const ELECTRON_MASS = 0.00054858;
+    const ATOMIC_MONO = {
+      H: 1.00782503, D: 2.01410178, He: 4.00260325,
+      Li: 7.01600344, Be: 9.01218307, B: 11.00930536, C: 12.00000000, N: 14.00307400, O: 15.99491462, F: 18.99840316, Ne: 19.99244018,
+      Na: 22.98976928, Mg: 23.98504170, Al: 26.98153853, Si: 27.97692653, P: 30.97376200, S: 31.97207117, Cl: 34.96885268, Ar: 39.96238312,
+      K: 38.96370649, Ca: 39.96259086, Sc: 44.95590828, Ti: 47.94794198, V: 50.94395704, Cr: 51.94050623, Mn: 54.93804391, Fe: 55.9349418,
+      Co: 58.93319429, Ni: 57.93534241, Cu: 62.929601, Zn: 63.929147, Ga: 68.9255735, Ge: 73.92117776, As: 74.92159457, Se: 79.9165218,
+      Br: 78.9183376, Kr: 83.91149773, Rb: 84.91178974, Sr: 87.9056125, Y: 88.9058403, Zr: 89.9046977, Nb: 92.906373, Mo: 97.9054048,
+      Ru: 101.9043441, Rh: 102.905498, Pd: 105.9034804, Ag: 106.9050916, Cd: 113.9033650, In: 114.90387878, Sn: 119.9022016, Sb: 120.903812,
+      Te: 129.9062227, I: 126.904468, Xe: 131.9041551, Cs: 132.90545196, Ba: 137.9052472, La: 138.9063563, Ce: 139.9054431,
+      Nd: 141.9077290, Sm: 151.9197397, Eu: 152.9212380, Gd: 157.9241123, Tb: 158.9253547, Dy: 163.9291819, Ho: 164.9303288, Er: 165.9302995,
+      Tm: 168.9342179, Yb: 173.9388664, Lu: 174.9407752, Hf: 179.9465570, Ta: 180.9479958, W: 183.9509309, Re: 186.9557501, Os: 191.9614867,
+      Ir: 192.9629216, Pt: 194.964774, Au: 196.96656879, Hg: 201.9706434, Tl: 204.9744278, Pb: 207.9766525, Bi: 208.9803991
+    };
+    const ATOMIC_AVG = {
+      H: 1.008, D: 2.014, He: 4.0026,
+      Li: 6.94, Be: 9.0122, B: 10.81, C: 12.011, N: 14.007, O: 15.999, F: 18.998, Ne: 20.180,
+      Na: 22.990, Mg: 24.305, Al: 26.982, Si: 28.085, P: 30.974, S: 32.06, Cl: 35.45, Ar: 39.948,
+      K: 39.098, Ca: 40.078, Sc: 44.956, Ti: 47.867, V: 50.942, Cr: 51.996, Mn: 54.938, Fe: 55.845,
+      Co: 58.933, Ni: 58.693, Cu: 63.546, Zn: 65.38, Ga: 69.723, Ge: 72.630, As: 74.922, Se: 78.971,
+      Br: 79.904, Kr: 83.798, Rb: 85.468, Sr: 87.62, Y: 88.906, Zr: 91.224, Nb: 92.906, Mo: 95.95,
+      Ru: 101.07, Rh: 102.91, Pd: 106.42, Ag: 107.87, Cd: 112.41, In: 114.82, Sn: 118.71, Sb: 121.76,
+      Te: 127.60, I: 126.904, Xe: 131.29, Cs: 132.905, Ba: 137.33, La: 138.91, Ce: 140.12,
+      Nd: 144.24, Sm: 150.36, Eu: 151.96, Gd: 157.25, Tb: 158.93, Dy: 162.50, Ho: 164.93, Er: 167.26,
+      Tm: 168.93, Yb: 173.05, Lu: 174.97, Hf: 178.49, Ta: 180.95, W: 183.84, Re: 186.21, Os: 190.23,
+      Ir: 192.22, Pt: 195.08, Au: 196.97, Hg: 200.59, Tl: 204.38, Pb: 207.2, Bi: 208.98
+    };
+    const ORGANIC_GROUPS = {
+      TBDMS: { C: 6, H: 15, Si: 1 }, Fmoc: { C: 15, H: 11, O: 2 }, dppf: { C: 34, H: 28, Fe: 1, P: 2 },
+      OAc: { C: 2, H: 3, O: 2 }, Boc: { C: 5, H: 9, O: 2 }, Cbz: { C: 8, H: 7, O: 2 },
+      TMS: { C: 3, H: 9, Si: 1 }, TBS: { C: 6, H: 15, Si: 1 }, tBu: { C: 4, H: 9 },
+      nBu: { C: 4, H: 9 }, sBu: { C: 4, H: 9 }, iPr: { C: 3, H: 7 }, nPr: { C: 3, H: 7 },
+      Ac: { C: 2, H: 3, O: 1 }, Ph: { C: 6, H: 5 }, Me: { C: 1, H: 3 }, Et: { C: 2, H: 5 },
+      Bu: { C: 4, H: 9 }, Bn: { C: 7, H: 7 }, Bz: { C: 7, H: 5, O: 1 },
+      Ts: { C: 7, H: 7, O: 2, S: 1 }, Ms: { C: 1, H: 3, O: 2, S: 1 }, Tf: { C: 1, F: 3, O: 2, S: 1 }
+    };
+    const GROUP_KEYS = Object.keys(ORGANIC_GROUPS).sort((a, b) => b.length - a.length);
+    const ELEM_KEYS = Object.keys(ATOMIC_MONO).sort((a, b) => b.length - a.length);
+    const SALT_SEGMENTS = new Set(['HCl','HBr','HI','HF','H2O','D2O','CF3COOH','CF3CO2H','TFA','CH3COOH','AcOH','HCOOH','H2SO4','H3PO4','CH2Cl2','DCM','EtOAc','MeOH','EtOH','THF','Cl']);
+
+    function normalizeFormulaStr(raw) {
+      const subMap = { '₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9' };
+      return String(raw || '').trim().replace(/[₀-₉]/g, ch => subMap[ch]).replace(/[•・*]/g, '·').replace(/\s+/g, '');
+    }
+    function splitFormulaSegments(str) {
+      const segs = []; let cur = '';
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i], prev = i > 0 ? str[i - 1] : '', next = i + 1 < str.length ? str[i + 1] : '';
+        if (ch === '·') { if (cur) segs.push(cur); cur = ''; }
+        else if (ch === '.' && !(/\d/.test(prev) && /\d/.test(next))) { if (cur) segs.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      if (cur) segs.push(cur);
+      return segs;
+    }
+    function addCounts(target, src, mult = 1) {
+      for (const [k, v] of Object.entries(src)) {
+        const nv = (target[k] || 0) + v * mult;
+        if (Math.abs(nv) < 1e-9) delete target[k]; else target[k] = nv;
+      }
+    }
+    function buildHillFormula(counts) {
+      const clean = {};
+      for (const [k, v] of Object.entries(counts)) if (v > 1e-6) clean[k] = v;
+      const keys = Object.keys(clean), ordered = [];
+      if (clean.C) ordered.push('C');
+      if (clean.C && clean.H) ordered.push('H');
+      keys.filter(k => !ordered.includes(k)).sort().forEach(k => ordered.push(k));
+      return ordered.map(k => { const c = Number(clean[k].toFixed(3)); return c === 1 ? k : `${k}${c}`; }).join('');
+    }
+    function parseFormulaSegment(seg) {
+      let i = 0, leadMult = 1;
+      const leadMatch = seg.match(/^(\d+(?:\.\d+)?)/);
+      if (leadMatch) { leadMult = Number(leadMatch[1]); i = leadMatch[1].length; if (i >= seg.length) return { error: '缺少化学式主体' }; }
+      const stack = [{}];
+      while (i < seg.length) {
+        const ch = seg[i];
+        if (ch === '(' || ch === '[') { stack.push({}); i++; }
+        else if (ch === ')' || ch === ']') {
+          if (stack.length === 1) return { error: '括号不匹配' };
+          i++;
+          const numMatch = seg.slice(i).match(/^(\d+(?:\.\d+)?)/);
+          const mult = numMatch ? Number(numMatch[1]) : 1;
+          if (numMatch) i += numMatch[1].length;
+          const popped = stack.pop();
+          addCounts(stack[stack.length - 1], popped, mult);
+        } else {
+          const rest = seg.slice(i);
+          let matchedGroup = null;
+          for (const g of GROUP_KEYS) if (rest.startsWith(g)) { matchedGroup = g; break; }
+          if (matchedGroup) {
+            i += matchedGroup.length;
+            const numMatch = rest.slice(matchedGroup.length).match(/^(\d+(?:\.\d+)?)/);
+            const mult = numMatch ? Number(numMatch[1]) : 1;
+            if (numMatch) i += numMatch[1].length;
+            addCounts(stack[stack.length - 1], ORGANIC_GROUPS[matchedGroup], mult);
+            continue;
+          }
+          let matchedElem = null;
+          for (const el of ELEM_KEYS) if (rest.startsWith(el)) { matchedElem = el; break; }
+          if (!matchedElem) return { error: `无法识别符号 "${seg[i]}"` };
+          i += matchedElem.length;
+          const numMatch = rest.slice(matchedElem.length).match(/^(\d+(?:\.\d+)?)/);
+          const mult = numMatch ? Number(numMatch[1]) : 1;
+          if (numMatch) i += numMatch[1].length;
+          stack[stack.length - 1][matchedElem] = (stack[stack.length - 1][matchedElem] || 0) + mult;
+        }
+      }
+      if (stack.length !== 1) return { error: '括号未闭合' };
+      const out = {}; addCounts(out, stack[0], leadMult);
+      return { counts: out };
+    }
+    const SMILES_VALENCE_AROM = { B: 3, C: 4, N: 3, O: 2, P: 3, S: 2 };
+    const SMILES_VALENCE_ALIPH = { B: [3], C: [4], N: [3, 5], O: [2], P: [3, 5], S: [2, 4, 6], F: [1], Cl: [1], Br: [1], I: [1] };
+
+    function parseSMILES(raw, stripSalts) {
+      const str = String(raw || '').trim();
+      if (!str || /\s/.test(str)) return { error: 'SMILES 不能包含空白字符' };
+      const parts = str.split('.');
+      let activeStr = str, strippedNotes = [];
+      if (stripSalts && parts.length > 1) {
+        const saltSmiles = new Set(['Cl','[Cl-]','Br','[Br-]','I','[I-]','F','[F-]','O','[Na+]','[K+]','OC(=O)C(F)(F)F','FC(F)(F)C(=O)O','CC(=O)O','OS(=O)(=O)O']);
+        const kept = parts.filter(p => { if (saltSmiles.has(p)) { strippedNotes.push(p); return false; } return true; });
+        if (kept.length > 0) activeStr = kept.join('.');
+      }
+      const atoms = [], branchStack = [], rings = {};
+      let currAtom = null, pendingBond = null;
+      const BOND_MAP = { '-': 1, '/': 1, '\\': 1, '=': 2, '#': 3, '$': 4, ':': 1.5 };
+      function linkAtoms(aIdx, bIdx, explicitOrder) {
+        const a = atoms[aIdx], b = atoms[bIdx];
+        const order = explicitOrder !== null ? explicitOrder : ((a.isAromatic && b.isAromatic) ? 1.5 : 1);
+        a.bondSum += order; b.bondSum += order;
+      }
+      let i = 0;
+      while (i < activeStr.length) {
+        const ch = activeStr[i];
+        if (ch === '.') { if (pendingBond !== null || branchStack.length > 0) return { error: 'SMILES "." 处语法不完整' }; currAtom = null; i++; continue; }
+        if (ch === '(') { if (currAtom === null || pendingBond !== null) return { error: 'SMILES 分支括号无效' }; branchStack.push(currAtom); i++; continue; }
+        if (ch === ')') { if (branchStack.length === 0 || pendingBond !== null) return { error: 'SMILES 分支括号不匹配' }; currAtom = branchStack.pop(); i++; continue; }
+        if (BOND_MAP[ch] !== undefined) { pendingBond = BOND_MAP[ch]; i++; continue; }
+        if (ch === '%' || (ch >= '0' && ch <= '9')) {
+          if (currAtom === null) return { error: '环编号缺少连接原子' };
+          let ringId;
+          if (ch === '%') { const m = activeStr.slice(i + 1).match(/^(\d\d)/); if (!m) return { error: '无效环编号 %' }; ringId = m[1]; i += 3; }
+          else { ringId = ch; i += 1; }
+          if (rings[ringId]) {
+            const open = rings[ringId]; delete rings[ringId];
+            if (open.atomIdx === currAtom) return { error: '环不能自连' };
+            const order = pendingBond !== null ? pendingBond : (open.bondOrder !== null ? open.bondOrder : ((atoms[open.atomIdx].isAromatic && atoms[currAtom].isAromatic) ? 1.5 : 1));
+            atoms[open.atomIdx].bondSum += order; atoms[currAtom].bondSum += order;
+          } else { rings[ringId] = { atomIdx: currAtom, bondOrder: pendingBond }; }
+          pendingBond = null; continue;
+        }
+        if (ch === '[') {
+          const end = activeStr.indexOf(']', i + 1);
+          if (end === -1) return { error: 'SMILES 方括号未闭合' };
+          const inner = activeStr.slice(i + 1, end);
+          let p = 0, iso = null;
+          const isoM = inner.slice(p).match(/^(\d+)/);
+          if (isoM) { iso = Number(isoM[1]); p += isoM[1].length; }
+          let elemSym = null, isArom = false;
+          const restInner = inner.slice(p);
+          if (restInner.startsWith('se') || restInner.startsWith('as')) { elemSym = restInner[0].toUpperCase() + restInner[1]; isArom = true; p += 2; }
+          else if (/^[cnopsb]/.test(restInner)) { elemSym = restInner[0].toUpperCase(); isArom = true; p += 1; }
+          else {
+            const el2 = restInner.match(/^([A-Z][a-z])/);
+            if (el2 && ATOMIC_MONO[el2[1]]) { elemSym = el2[1]; p += 2; }
+            else { const el1 = restInner.match(/^([A-Z])/); if (el1 && ATOMIC_MONO[el1[1]]) { elemSym = el1[1]; p += 1; } }
+          }
+          if (!elemSym) return { error: `SMILES 未知原子 [${inner}]` };
+          const chirM = inner.slice(p).match(/^(@@?|@(?:TH|AL|SP|TB|OH)\d+)/);
+          if (chirM) p += chirM[1].length;
+          let explH = 0;
+          const hM = inner.slice(p).match(/^H(\d*)/);
+          if (hM) { explH = hM[1] === '' ? 1 : Number(hM[1]); p += hM[0].length; }
+          const chgM = inner.slice(p).match(/^([+-]\d*|[+]+|[-]+)/);
+          let formalCharge = 0;
+          if (chgM) {
+            const cs = chgM[1];
+            if (/^\+\d+$/.test(cs)) formalCharge = Number(cs.slice(1));
+            else if (/^-\d+$/.test(cs)) formalCharge = -Number(cs.slice(1));
+            else if (/^\++$/.test(cs)) formalCharge = cs.length;
+            else if (/^-+$/.test(cs)) formalCharge = -cs.length;
+            p += cs.length;
+          }
+          const clsM = inner.slice(p).match(/^:\d+/);
+          if (clsM) p += clsM[0].length;
+          if (p !== inner.length) return { error: `SMILES 方括号格式无效 [${inner}]` };
+          const newIdx = atoms.length;
+          atoms.push({ elem: elemSym, isAromatic: isArom, explicit: true, explicitH: explH, iso, charge: formalCharge, bondSum: 0 });
+          if (currAtom !== null) linkAtoms(currAtom, newIdx, pendingBond);
+          currAtom = newIdx; pendingBond = null; i = end + 1; continue;
+        }
+        let elemSym = null, isArom = false, adv = 1;
+        if (activeStr.startsWith('Cl', i)) { elemSym = 'Cl'; adv = 2; }
+        else if (activeStr.startsWith('Br', i)) { elemSym = 'Br'; adv = 2; }
+        else if ('BCNOPSFI'.includes(ch)) { elemSym = ch; adv = 1; }
+        else if ('bcnops'.includes(ch)) { elemSym = ch.toUpperCase(); isArom = true; adv = 1; }
+        else return { error: `SMILES 无法识别字符 "${ch}"` };
+        const newIdx = atoms.length;
+        atoms.push({ elem: elemSym, isAromatic: isArom, explicit: false, explicitH: 0, iso: null, charge: 0, bondSum: 0 });
+        if (currAtom !== null) linkAtoms(currAtom, newIdx, pendingBond);
+        currAtom = newIdx; pendingBond = null; i += adv;
+      }
+      if (branchStack.length > 0 || pendingBond !== null || Object.keys(rings).length > 0) return { error: 'SMILES 括号/环/键未闭合' };
+      if (atoms.length === 0) return { error: 'SMILES 为空' };
+      const counts = {};
+      let exactMass = 0, avgMass = 0, totalCharge = 0;
+      for (const a of atoms) {
+        let hCount = 0;
+        if (a.explicit) hCount = a.explicitH;
+        else if (a.isAromatic) {
+          const val = SMILES_VALENCE_AROM[a.elem];
+          if (val !== undefined) hCount = Math.max(0, Math.round(val - Math.ceil(a.bondSum)));
+        } else {
+          const vals = SMILES_VALENCE_ALIPH[a.elem];
+          if (vals) { const v = vals.find(x => x >= a.bondSum - 1e-6); if (v !== undefined) hCount = Math.max(0, Math.round(v - a.bondSum)); }
+        }
+        totalCharge += a.charge;
+        if (a.iso === 2 && a.elem === 'H') {
+          counts.D = (counts.D || 0) + 1; exactMass += ATOMIC_MONO.D; avgMass += ATOMIC_AVG.D;
+        } else {
+          counts[a.elem] = (counts[a.elem] || 0) + 1;
+          exactMass += (ATOMIC_MONO[a.elem] || 0); avgMass += (ATOMIC_AVG[a.elem] || 0);
+        }
+        if (hCount > 0) {
+          counts.H = (counts.H || 0) + hCount;
+          exactMass += hCount * ATOMIC_MONO.H; avgMass += hCount * ATOMIC_AVG.H;
+        }
+      }
+      exactMass -= totalCharge * ELECTRON_MASS;
+      return { counts, exactMass, avgMass, hill: buildHillFormula(counts), mode: 'SMILES', stripped: strippedNotes, hasDot: parts.length > 1 };
+    }
+
+    function looksLikeSmiles(raw) {
+      const s = String(raw || '').trim();
+      if (!s || /\s/.test(s)) return false;
+      if (s.includes('=') || s.includes('#') || s.includes('/') || s.includes('\\')) return true;
+      if (/^\[/.test(s) || /\[C@|\[N\+|\[O-|\[nH\]/.test(s)) return true;
+      if (/^(?:[A-Z][a-z]?\d*|[()[\]])+$/.test(s) && /[A-Z]/.test(s)) {
+        if (/^(?:[A-Z][a-z]?\d*|[()[\]]|[·•・*])+$/.test(s)) return false;
+      }
+      const norm = normalizeFormulaStr(s);
+      if (splitFormulaSegments(norm).every(seg => !parseFormulaSegment(seg).error)) return false;
+      if (/[a-z]/.test(s) && /c1|n1|o1|c\(|C\(|[cnops]\d|[cnops]\(|[a-z]{2,}/.test(s)) return true;
+      return false;
+    }
+
+    function parseFormulaFull(raw, stripSalts) {
+      const norm = normalizeFormulaStr(raw);
+      if (!norm) return null;
+      const segs = splitFormulaSegments(norm);
+      if (segs.length === 0) return { error: '分子式格式无效' };
+      let activeSegs = segs, stripped = [];
+      if (stripSalts && segs.length > 1) {
+        const kept = [];
+        for (const sg of segs) {
+          const cleanSg = sg.replace(/^\d+(?:\.\d+)?/, '');
+          if (SALT_SEGMENTS.has(cleanSg)) stripped.push(sg); else kept.push(sg);
+        }
+        if (kept.length > 0) activeSegs = kept;
+      }
+      const totalCounts = {};
+      for (const seg of activeSegs) {
+        const res = parseFormulaSegment(seg);
+        if (res.error) return { error: res.error };
+        addCounts(totalCounts, res.counts, 1);
+      }
+      let exactMass = 0, avgMass = 0;
+      for (const [el, cnt] of Object.entries(totalCounts)) {
+        if (!ATOMIC_MONO[el]) return { error: `不支持元素 ${el}` };
+        exactMass += ATOMIC_MONO[el] * cnt;
+        avgMass += ATOMIC_AVG[el] * cnt;
+      }
+      if (exactMass <= 0) return { error: '无效分子式' };
+      return { counts: totalCounts, exactMass, avgMass, hill: buildHillFormula(totalCounts), mode: '分子式', stripped, hasDot: segs.length > 1 };
+    }
+
+    function analyzeInputStructure(raw, stripSalts) {
+      const s = String(raw || '').trim();
+      if (!s) return null;
+      if (looksLikeSmiles(s)) {
+        const r = parseSMILES(s, stripSalts);
+        if (!r.error) return r;
+        const f = parseFormulaFull(s, stripSalts);
+        return f && !f.error ? f : r;
+      }
+      const f = parseFormulaFull(s, stripSalts);
+      if (f && !f.error) return f;
+      if (/[a-z()=\d#]/.test(s) && !/[^\x20-\x7E]/.test(s)) {
+        const r = parseSMILES(s, stripSalts);
+        if (!r.error) return r;
+      }
+      return f;
+    }
+
+    function ionCountsFormula(baseCounts, mult, deltaCounts, chargeSign) {
+      const c = {};
+      addCounts(c, baseCounts, mult);
+      addCounts(c, deltaCounts, 1);
+      const hill = buildHillFormula(c);
+      if (chargeSign === 0) return hill;
+      if (Math.abs(chargeSign) === 1) return hill + (chargeSign > 0 ? '+' : '-');
+      return hill + Math.abs(chargeSign) + (chargeSign > 0 ? '+' : '-');
+    }
+
+    const ADDUCT_SPECS = [
+      { id: 'MpH',    mode: '+', label: '[M + H]⁺',        mult: 1, z:  1, delta: { H: 1 },                  note: '正离子最常见基准峰' },
+      { id: 'MpNa',   mode: '+', label: '[M + Na]⁺',       mult: 1, z:  1, delta: { Na: 1 },                 note: '极常见加钠峰 (+22.9892)' },
+      { id: 'MpK',    mode: '+', label: '[M + K]⁺',        mult: 1, z:  1, delta: { K: 1 },                  note: '常见加钾峰 (+38.9632)' },
+      { id: 'MpNH4',  mode: '+', label: '[M + NH₄]⁺',      mult: 1, z:  1, delta: { N: 1, H: 4 },            note: '含氧/酯类流动相含铵盐' },
+      { id: 'MpMeOH', mode: '+', label: '[M + CH₃OH + H]⁺',mult: 1, z:  1, delta: { C: 1, H: 5, O: 1 },      note: '甲醇溶剂加合 (+33.0335)' },
+      { id: 'MpACN',  mode: '+', label: '[M + CH₃CN + H]⁺',mult: 1, z:  1, delta: { C: 2, H: 4, N: 1 },      note: '乙腈流动相加合 (+42.0338)' },
+      { id: 'Mp2H',   mode: '+', label: '[M + 2H]²⁺',      mult: 1, z:  2, delta: { H: 2 },                  note: '多碱性基团/多肽双电荷' },
+      { id: '2MpH',   mode: '+', label: '[2M + H]⁺',       mult: 2, z:  1, delta: { H: 1 },                  note: '二聚体加氢峰' },
+      { id: '2MpNa',  mode: '+', label: '[2M + Na]⁺',      mult: 2, z:  1, delta: { Na: 1 },                 note: '二聚体加钠峰' },
+      { id: 'MmH',    mode: '-', label: '[M - H]⁻',        mult: 1, z: -1, delta: { H: -1 },                 note: '负离子最常见去质子峰' },
+      { id: 'MpCl',   mode: '-', label: '[M + Cl]⁻',       mult: 1, z: -1, delta: { Cl: 1 },                 note: '二氯/含氯离子加合 (+34.9694)' },
+      { id: 'MpHCOO', mode: '-', label: '[M + HCOO]⁻',     mult: 1, z: -1, delta: { C: 1, H: 1, O: 2 },      note: '甲酸流动相负离子加合' },
+      { id: 'MpAcO',  mode: '-', label: '[M + CH₃COO]⁻',   mult: 1, z: -1, delta: { C: 2, H: 3, O: 2 },      note: '乙酸/乙酸铵负离子加合' },
+      { id: '2MmH',   mode: '-', label: '[2M - H]⁻',       mult: 2, z: -1, delta: { H: -1 },                 note: '负离子二聚体峰' },
+      { id: 'Mrad',   mode: 'EI',label: '[M]⁺• (EI)',      mult: 1, z:  1, delta: {},                        note: '电子轰击/MALDI自由基离子' }
+    ];
+
+    function computeAdducts(parsed) {
+      const out = [];
+      for (const sp of ADDUCT_SPECS) {
+        let valid = true;
+        for (const [el, dc] of Object.entries(sp.delta)) {
+          if ((parsed.counts[el] || 0) * sp.mult + dc < 0) { valid = false; break; }
+        }
+        if (!valid) continue;
+        let deltaMass = 0;
+        for (const [el, dc] of Object.entries(sp.delta)) deltaMass += (ATOMIC_MONO[el] || 0) * dc;
+        const absZ = Math.abs(sp.z);
+        // Positive ion removes z electrons; negative ion adds |z| electrons
+        const eAdj = sp.z > 0 ? (-absZ * ELECTRON_MASS) : (+absZ * ELECTRON_MASS);
+        const mz = (parsed.exactMass * sp.mult + deltaMass + eAdj) / absZ;
+        const ionFormula = ionCountsFormula(parsed.counts, sp.mult, sp.delta, sp.z);
+        out.push({ ...sp, mz, ionFormula });
+      }
+      return out;
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+
+    const STORE_KEY = 'maodie_nmr_hrms_v1';
+    let appState = {
+      solvent: 'CDCl3',
+      nucleus: '1H',
+      tol1H: 0.15,
+      tol13C: 0.80,
+      ppmQuery: '',
+      nameQuery: '',
+      showAllMatrixId: '',
+      hrmsInput: 'CC(=O)Oc1ccccc1C(=O)O',
+      stripSalts: true,
+      foundMz: '181.0498',
+      hrmsFilter: 'all',
+      activeTab: 'nmr'
+    };
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (saved && typeof saved === 'object') appState = { ...appState, ...saved };
+    } catch {}
+
+    function saveApp() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(appState)); } catch {}
+    }
+
+    function doCopy(text, msg) {
+      if (window.AndroidBridge && typeof window.AndroidBridge.copyText === 'function') {
+        window.AndroidBridge.copyText(text);
+        showToast(msg || '已复制');
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(msg || '已复制')).catch(() => fallbackCopy(text, msg));
+      } else {
+        fallbackCopy(text, msg);
+      }
+    }
+    function fallbackCopy(text, msg) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showToast(msg || '已复制'); } catch { showToast('请长按文本手动复制'); }
+      document.body.removeChild(ta);
+    }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => t.classList.remove('show'), 2100);
+    }
+
+    function initWatermark() {
+      const layer = document.getElementById('wmLayer');
+      if (!layer) return;
+      let html = '';
+      for (let i = 0; i < 40; i++) html += '<span class="wm-item">耄耋小镇的基米大王 制作</span>';
+      layer.innerHTML = html;
+    }
+
+    function parsePpmTokens(str) {
+      return String(str || '').trim().split(/[\s,，;；/|]+/).map(x => Number(x)).filter(x => !Number.isNaN(x) && Number.isFinite(x));
+    }
+
+    function renderSolventPills() {
+      const box = document.getElementById('solventChips');
+      if (!box) return;
+      box.innerHTML = SOLVENTS.map(s => `
+        <button type="button" class="chip ${appState.solvent === s.id ? 'active' : ''}" onclick="setSolvent('${s.id}')">
+          ${esc(s.short)} <span class="chip-sub">${esc(s.name)}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderResidualBanner() {
+      const s = SOLVENTS.find(x => x.id === appState.solvent) || SOLVENTS[0];
+      const r1h = s.res1H.map(p => `<b>${p.d.toFixed(2)}</b> (${esc(p.m)}, ${esc(p.g)})`).join('；');
+      const r13c = s.res13C.length ? s.res13C.map(p => `<b>${p.d.toFixed(2)}</b> (${esc(p.m)}, ${esc(p.g)})`).join('，') : '无碳信号 (¹³C)';
+      const w = s.h2o ? `<b>${s.h2o.d.toFixed(2)}</b> (${esc(s.h2o.m)}, ${esc(s.h2o.g)})` : '—';
+      document.getElementById('residualBanner').innerHTML = `
+        <div class="res-item"><span>🧪 溶剂残余峰 ¹H</span><div>${r1h} ppm</div></div>
+        <div class="res-item"><span>💧 水峰 (H₂O/HDO)</span><div>${w} ppm</div></div>
+        <div class="res-item"><span>🧲 溶剂碳峰 ¹³C</span><div>${r13c}${s.res13C.length ? ' ppm' : ''}</div></div>
+      `;
+    }
+
+    function renderTolChips() {
+      const box = document.getElementById('tolChips');
+      if (!box) return;
+      const opts = appState.nucleus === '1H' ? [0.05, 0.15, 0.30] : [0.30, 0.80, 1.50];
+      const cur = appState.nucleus === '1H' ? appState.tol1H : appState.tol13C;
+      box.innerHTML = opts.map(v => `
+        <button type="button" class="mini-chip ${Math.abs(cur - v) < 1e-6 ? 'active' : ''}" onclick="setTol(${v})">±${v}</button>
+      `).join('');
+    }
+
+    function renderQuickImpurityChips() {
+      const box = document.getElementById('quickImpChips');
+      if (!box) return;
+      const hots = NMR_IMPURITIES.filter(x => x.hot);
+      box.innerHTML = hots.map(x => `
+        <button type="button" class="mini-chip ${appState.nameQuery === x.name ? 'active' : ''}" onclick="pickQuickImp('${esc(x.name)}')">${esc(x.name.split(' ')[0])}</button>
+      `).join('');
+    }
+
+    function renderNMRResults() {
+      const out = document.getElementById('nmrResults');
+      if (!out) return;
+      const nucKey = appState.nucleus === '1H' ? 'h1' : 'c13';
+      const solv = appState.solvent;
+      const tol = appState.nucleus === '1H' ? appState.tol1H : appState.tol13C;
+      const qPpm = parsePpmTokens(appState.ppmQuery);
+      const qName = (appState.nameQuery || '').trim().toLowerCase();
+
+      const items = [];
+      for (const imp of NMR_IMPURITIES) {
+        const peaks = (imp[nucKey] && imp[nucKey][solv]) ? imp[nucKey][solv] : null;
+        if (qName) {
+          const hit = imp.name.toLowerCase().includes(qName) || imp.aliases.some(a => a.toLowerCase().includes(qName));
+          if (!hit) continue;
+          items.push({ imp, peaks, matchedMap: {}, hitCount: 0, totalQ: qPpm.length, minDiff: 0, missingForSolv: !peaks });
+        } else if (qPpm.length > 0) {
+          if (!peaks) continue;
+          const matchedMap = {};
+          let hitCount = 0, sumDiff = 0, minDiff = 999;
+          for (let qi = 0; qi < qPpm.length; qi++) {
+            const qp = qPpm[qi];
+            let bestIdx = -1, bestD = 999;
+            peaks.forEach((pk, pi) => {
+              const diff = Math.abs(pk[0] - qp);
+              if (diff <= tol + 1e-6 && diff < bestD) { bestD = diff; bestIdx = pi; }
+            });
+            if (bestIdx !== -1) {
+              hitCount++;
+              sumDiff += bestD;
+              if (bestD < minDiff) minDiff = bestD;
+              if (!matchedMap[bestIdx] || bestD < matchedMap[bestIdx].diff) {
+                matchedMap[bestIdx] = { q: qp, diff: bestD };
+              }
+            }
+          }
+          if (hitCount > 0) {
+            items.push({ imp, peaks, matchedMap, hitCount, totalQ: qPpm.length, minDiff, avgDiff: sumDiff / hitCount });
+          }
+        } else {
+          if (peaks) items.push({ imp, peaks, matchedMap: {}, hitCount: 0, totalQ: 0, minDiff: 0 });
+        }
+      }
+
+      if (qPpm.length > 0 && !qName) {
+        items.sort((a, b) => (b.hitCount - a.hitCount) || (a.avgDiff - b.avgDiff));
+      }
+
+      if (items.length === 0) {
+        const altMsg = (appState.nucleus === '13C' && !qName && qPpm.length > 0)
+          ? '该氘代试剂下 ¹³C 未命中，可放宽容差（如 ±1.5）或切换至 CDCl₃ / DMSO-d₆ / ¹H 谱。'
+          : '在当前容差内未匹配到常见溶剂/杂质峰，可尝试调大容差（±0.30）或检查氘代试剂是否选对。';
+        out.innerHTML = `<div class="empty-box">${altMsg}</div>`;
+        return;
+      }
+
+      const headerHint = qPpm.length > 0 && !qName
+        ? `<div class="res-summary">在 <b>${esc(SOLVENTS.find(s=>s.id===solv).short)} (${appState.nucleus === '1H' ? '¹H' : '¹³C'})</b> 中匹配到 <b>${items.length}</b> 种可能杂质（容差 ±${tol} ppm）</div>`
+        : (qName ? '' : `<div class="res-summary">当前展示 <b>${esc(SOLVENTS.find(s=>s.id===solv).short)} (${appState.nucleus === '1H' ? '¹H' : '¹³C'})</b> 已收录的全部 ${items.length} 种常见溶剂/杂质参考峰</div>`);
+
+      out.innerHTML = headerHint + items.map(it => {
+        const imp = it.imp;
+        const badge = it.totalQ > 0
+          ? `<span class="hit-badge ${it.hitCount === it.totalQ ? 'full' : ''}">命中 ${it.hitCount}/${it.totalQ} 峰 · Δ${it.minDiff.toFixed(2)}</span>`
+          : '';
+        let pkHtml = '';
+        if (!it.peaks) {
+          pkHtml = `<div class="muted-note">Fulmer/Gottlieb 原表未收录该物质在 ${esc(SOLVENTS.find(s=>s.id===solv).short)} 中的 ${appState.nucleus === '1H' ? '¹H' : '¹³C'} 数据（可能不溶或未测），可点击右侧展开其他氘代试剂对照：</div>`;
+        } else {
+          pkHtml = `<div class="peak-list">` + it.peaks.map((pk, idx) => {
+            const m = it.matchedMap[idx];
+            const valStr = Number.isInteger(pk[0] * 10) ? pk[0].toFixed(2) : pk[0].toFixed(2);
+            return `<span class="peak-tag ${m ? 'matched' : ''}" onclick="doCopy('${valStr}','已复制 ${valStr} ppm')" title="点击复制数值">
+              <strong>${valStr}</strong> <small>${esc(pk[1])} · ${esc(pk[2])}</small>
+              ${m ? `<em>Δ${m.diff.toFixed(2)}</em>` : ''}
+            </span>`;
+          }).join('') + `</div>`;
+        }
+        const showMatrix = appState.showAllMatrixId === imp.id;
+        let matrixHtml = '';
+        if (showMatrix) {
+          const rows = SOLVENTS.map(sv => {
+            const pks = imp[nucKey] && imp[nucKey][sv.id];
+            if (!pks) return '';
+            const txt = pks.map(p => `${p[0].toFixed(2)} (${p[1]}, ${p[2]})`).join('； ');
+            return `<tr><td class="sv-col">${esc(sv.short)}</td><td>${esc(txt)}</td></tr>`;
+          }).filter(Boolean).join('');
+          matrixHtml = rows
+            ? `<table class="mini-table"><tbody>${rows}</tbody></table>`
+            : `<div class="muted-note">暂无其他氘代试剂该核素数据</div>`;
+        }
+        return `
+          <div class="imp-card ${it.hitCount > 0 && it.hitCount === it.totalQ ? 'top-hit' : ''}">
+            <div class="imp-head">
+              <div class="imp-title">${esc(imp.name)} ${badge}</div>
+              <button type="button" class="link-btn" onclick="toggleMatrix('${imp.id}')">${showMatrix ? '收起全部溶剂 ▲' : '各氘代试剂对照 ▼'}</button>
+            </div>
+            ${pkHtml}
+            ${imp.note ? `<div class="imp-note">💡 ${esc(imp.note)}</div>` : ''}
+            ${matrixHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setSolvent(id) { appState.solvent = id; saveApp(); renderSolventPills(); renderResidualBanner(); renderNMRResults(); }
+    function setNucleus(n) {
+      appState.nucleus = n;
+      saveApp();
+      document.getElementById('nuc1H').classList.toggle('active', n === '1H');
+      document.getElementById('nuc13C').classList.toggle('active', n === '13C');
+      renderTolChips(); renderNMRResults();
+    }
+    function setTol(v) {
+      if (appState.nucleus === '1H') appState.tol1H = v; else appState.tol13C = v;
+      saveApp(); renderTolChips(); renderNMRResults();
+    }
+    function onPpmInput(val) {
+      appState.ppmQuery = val;
+      if (val.trim()) {
+        appState.nameQuery = '';
+        const nInp = document.getElementById('nameInput');
+        if (nInp) nInp.value = '';
+        renderQuickImpurityChips();
+      }
+      saveApp(); renderNMRResults();
+    }
+    function onNameInput(val) {
+      appState.nameQuery = val;
+      if (val.trim()) {
+        appState.ppmQuery = '';
+        const pInp = document.getElementById('ppmInput');
+        if (pInp) pInp.value = '';
+      }
+      saveApp(); renderQuickImpurityChips(); renderNMRResults();
+    }
+    function pickQuickImp(name) {
+      appState.nameQuery = (appState.nameQuery === name) ? '' : name;
+      appState.ppmQuery = '';
+      const pInp = document.getElementById('ppmInput');
+      const nInp = document.getElementById('nameInput');
+      if (pInp) pInp.value = '';
+      if (nInp) nInp.value = appState.nameQuery;
+      saveApp(); renderQuickImpurityChips(); renderNMRResults();
+    }
+    function toggleMatrix(id) {
+      appState.showAllMatrixId = (appState.showAllMatrixId === id) ? '' : id;
+      saveApp(); renderNMRResults();
+    }
+
+    // =========================================================================
+    // 3. HRMS UI RENDERER
+    // =========================================================================
+    function renderHRMS() {
+      const resBox = document.getElementById('hrmsSummary');
+      const listBox = document.getElementById('adductList');
+      const siBox = document.getElementById('siCopyBox');
+      const saltTip = document.getElementById('saltTip');
+
+      const parsed = analyzeInputStructure(appState.hrmsInput, appState.stripSalts);
+      if (!parsed) {
+        resBox.innerHTML = `<div class="empty-box">请输入分子式（如 <code>C18H22N2O3</code>、<code>Pd(PPh3)4</code>）或从 ChemDraw 粘贴 SMILES</div>`;
+        listBox.innerHTML = '';
+        siBox.style.display = 'none';
+        if (saltTip) saltTip.style.display = 'none';
+        return;
+      }
+      if (parsed.error) {
+        resBox.innerHTML = `<div class="err-box">⚠️ ${esc(parsed.error)}</div>`;
+        listBox.innerHTML = '';
+        siBox.style.display = 'none';
+        if (saltTip) saltTip.style.display = 'none';
+        return;
+      }
+
+      if (saltTip) {
+        if (parsed.hasDot) {
+          saltTip.style.display = 'flex';
+          const stxt = parsed.stripped && parsed.stripped.length
+            ? `已自动忽略成盐/溶剂片段：${parsed.stripped.join(' · ')}（按游离分子计算）`
+            : '检测到多组分/成盐符号（可勾选自动去盐按游离分子算）';
+          document.getElementById('saltTipText').textContent = stxt;
+        } else {
+          saltTip.style.display = 'none';
+        }
+      }
+
+      resBox.innerHTML = `
+        <div class="mass-cards">
+          <div class="mass-card main">
+            <span>Exact Mass (单同位素精确质量)</span>
+            <strong onclick="doCopy('${parsed.exactMass.toFixed(4)}','已复制 Exact Mass')" title="点击复制">${parsed.exactMass.toFixed(4)}</strong>
+          </div>
+          <div class="mass-card">
+            <span>识别模式 / Hill 分子式</span>
+            <strong>[${esc(parsed.mode)}] ${esc(parsed.hill)}</strong>
+          </div>
+          <div class="mass-card">
+            <span>平均分子量 (Avg MW)</span>
+            <strong>${parsed.avgMass.toFixed(2)}</strong>
+          </div>
+        </div>
+      `;
+
+      const foundVal = parseFloat(appState.foundMz);
+      const hasFound = !Number.isNaN(foundVal) && foundVal > 0;
+      const allAdducts = computeAdducts(parsed);
+
+      let bestId = null, bestAbsPpm = Infinity;
+      allAdducts.forEach(ad => {
+        if (hasFound) {
+          ad.diffDa = foundVal - ad.mz;
+          ad.ppmErr = (ad.diffDa / ad.mz) * 1e6;
+          if (Math.abs(ad.ppmErr) < bestAbsPpm) { bestAbsPpm = Math.abs(ad.ppmErr); bestId = ad.id; }
+        }
+      });
+
+      const filtered = allAdducts.filter(ad => {
+        if (appState.hrmsFilter === '+') return ad.mode === '+';
+        if (appState.hrmsFilter === '-') return ad.mode === '-';
+        return true;
+      });
+
+      listBox.innerHTML = filtered.map(ad => {
+        const isBest = hasFound && ad.id === bestId;
+        let errHtml = '';
+        if (hasFound && (isBest || Math.abs(ad.diffDa) <= 2.0)) {
+          const ap = Math.abs(ad.ppmErr);
+          const cls = ap <= 5 ? 'ok' : (ap <= 10 ? 'warn' : 'bad');
+          const sign = ad.ppmErr >= 0 ? '+' : '';
+          const dSign = ad.diffDa >= 0 ? '+' : '';
+          errHtml = `<div class="err-pill ${cls}">${sign}${ad.ppmErr.toFixed(2)} ppm (${dSign}${ad.diffDa.toFixed(4)})</div>`;
+        }
+        return `
+          <div class="adduct-row ${isBest ? 'best' : ''}" onclick="doCopy('${ad.mz.toFixed(4)}','已复制 ${esc(ad.label)}: ${ad.mz.toFixed(4)}')" title="点击复制理论 m/z">
+            <div class="ad-left">
+              <span class="mode-tag ${ad.mode === '-' ? 'neg' : (ad.mode === 'EI' ? 'ei' : '')}">${esc(ad.mode === 'EI' ? 'EI' : 'ESI' + ad.mode)}</span>
+              <div>
+                <div class="ad-name">${esc(ad.label)} ${isBest ? '<span class="best-badge">🎯 最接近实测</span>' : ''}</div>
+                <div class="ad-sub">${esc(ad.ionFormula)} · ${esc(ad.note)}</div>
+              </div>
+            </div>
+            <div class="ad-right">
+              <div class="ad-mz">${ad.mz.toFixed(4)}</div>
+              ${errHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const targetAd = allAdducts.find(a => a.id === bestId) || allAdducts[0];
+      if (targetAd) {
+        const foundPart = hasFound ? `; found, ${foundVal.toFixed(4)}.` : '; found, ____.';
+        const siText = `HRMS (ESI) m/z: ${targetAd.label} calcd for ${targetAd.ionFormula}, ${targetAd.mz.toFixed(4)}${foundPart}`;
+        siBox.style.display = 'flex';
+        document.getElementById('siPreview').textContent = siText;
+        window._lastSiText = siText;
+      } else {
+        siBox.style.display = 'none';
+      }
+    }
+
+    function setHrmsFilter(f) {
+      appState.hrmsFilter = f;
+      saveApp();
+      ['all', '+', '-'].forEach(k => {
+        const el = document.getElementById('hf_' + k);
+        if (el) el.classList.toggle('active', f === k);
+      });
+      renderHRMS();
+    }
+    function onHrmsInput(v) { appState.hrmsInput = v; saveApp(); renderHRMS(); }
+    function onFoundInput(v) { appState.foundMz = v; saveApp(); renderHRMS(); }
+    function toggleStripSalts(chk) { appState.stripSalts = chk; saveApp(); renderHRMS(); }
+    function copySiText() { if (window._lastSiText) doCopy(window._lastSiText, '已复制论文 SI 格式（纯净无水印）'); }
+
+    function loadSampleAll() {
+      appState.solvent = 'CDCl3';
+      appState.nucleus = '1H';
+      appState.ppmQuery = '4.12 2.05 1.26';
+      appState.nameQuery = '';
+      appState.showAllMatrixId = '';
+      appState.hrmsInput = 'CC(=O)Oc1ccccc1C(=O)O';
+      appState.foundMz = '181.0498';
+      saveApp(); syncInputsToUI(); showToast('已载入示例（乙酸乙酯多峰匹配 + 阿司匹林 HRMS）');
+    }
+    function resetAll() {
+      appState.ppmQuery = ''; appState.nameQuery = ''; appState.showAllMatrixId = '';
+      appState.hrmsInput = ''; appState.foundMz = '';
+      saveApp(); syncInputsToUI(); showToast('已清空查询');
+    }
+
+    function applyTabUI() {
+      const t = (appState.activeTab === 'hrms') ? 'hrms' : 'nmr';
+      const bN = document.getElementById('tabBtnNmr');
+      const bH = document.getElementById('tabBtnHrms');
+      const pN = document.getElementById('paneNmr');
+      const pH = document.getElementById('paneHrms');
+      if (bN) bN.classList.toggle('active', t === 'nmr');
+      if (bH) bH.classList.toggle('active', t === 'hrms');
+      if (pN) pN.classList.toggle('active', t === 'nmr');
+      if (pH) pH.classList.toggle('active', t === 'hrms');
+    }
+    function switchTab(t) {
+      appState.activeTab = (t === 'hrms') ? 'hrms' : 'nmr';
+      saveApp();
+      applyTabUI();
+      try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch { window.scrollTo(0, 0); }
+    }
+
+    function syncInputsToUI() {
+      const pInp = document.getElementById('ppmInput');
+      const nInp = document.getElementById('nameInput');
+      const hInp = document.getElementById('hrmsInput');
+      const fInp = document.getElementById('foundMzInput');
+      const sChk = document.getElementById('stripSaltsChk');
+      if (pInp) pInp.value = appState.ppmQuery || '';
+      if (nInp) nInp.value = appState.nameQuery || '';
+      if (hInp) hInp.value = appState.hrmsInput || '';
+      if (fInp) fInp.value = appState.foundMz || '';
+      if (sChk) sChk.checked = !!appState.stripSalts;
+      document.getElementById('nuc1H').classList.toggle('active', appState.nucleus === '1H');
+      document.getElementById('nuc13C').classList.toggle('active', appState.nucleus === '13C');
+      ['all', '+', '-'].forEach(k => {
+        const el = document.getElementById('hf_' + k);
+        if (el) el.classList.toggle('active', appState.hrmsFilter === k);
+      });
+      applyTabUI();
+      renderSolventPills(); renderTolChips(); renderResidualBanner(); renderQuickImpurityChips(); renderNMRResults(); renderHRMS();
+    }
+
+    window._onAndroidBack = function() {
+      if (appState.showAllMatrixId) { appState.showAllMatrixId = ''; renderNMRResults(); return true; }
+      if (appState.activeTab === 'hrms') { switchTab('nmr'); return true; }
+      return false;
+    };
+    initWatermark();
+    syncInputsToUI();
+  </script>
+</body>
+</html>
